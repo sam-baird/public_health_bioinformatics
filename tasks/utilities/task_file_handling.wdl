@@ -93,3 +93,49 @@ task transfer_files {
       preemptible: 0
   }
 }
+
+task cat_tables {
+  input {
+    Array[File] files_to_cat
+    Array[String] samplename
+    String concatenated_file_name
+    String docker_image = "quay.io/theiagen/utility:1.1"
+  }
+  meta {
+    # added so that call caching is always turned off
+    volatile: true
+  }
+  command <<<
+  file_array=(~{sep=' ' files_to_cat})
+  file_array_len=$(echo "${#file_array[@]}")
+
+  samplename_array=(~{sep=' ' samplename})
+  samplename_array_len=$(echo "${#samplename_array[@]}")
+
+  # Ensure assembly, and samplename arrays are of equal length
+  if [ "$file_array_len" -ne "$samplename_array_len" ]; then
+    echo "File array (length: $file_array_len) and samplename array (length: $samplename_array_len) are of unequal length." >&2
+    exit 1
+  fi
+  
+  touch ~{concatenated_file_name}
+
+  # cat files one by one and store them in the concatenated_files file
+  for index in ${!file_array[@]}; do
+    file=${file_array[$index]}
+    samplename=${samplename_array[$index]}
+    awk 'BEGIN{ FS = OFS = "\t" } { print ${samplename}, $0 }' ${file} > file.tmp
+    cat file.tmp >> ~{concatenated_file_name}
+  done
+>>>
+  output {
+    File concatenated_files = "~{concatenated_file_name}"
+  }
+  runtime {
+    docker: "~{docker_image}"
+    memory: "8 GB"
+    cpu: 2
+    disks: "local-disk 100 SSD"
+    preemptible: 0
+  }
+}
