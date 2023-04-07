@@ -7,7 +7,6 @@ workflow concatenate_column_content {
   input {
     Array[File] files_to_cat
     String concatenated_file_name
-    Array[String] samplename
     Boolean samplename_column = false
   }
   if (!samplename_column) {
@@ -21,7 +20,6 @@ workflow concatenate_column_content {
     call file_handling.cat_tables {
       input:
         files_to_cat = files_to_cat,
-        samplename = samplename,
         concatenated_file_name = concatenated_file_name
     }   
   }
