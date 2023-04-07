@@ -97,6 +97,7 @@ task transfer_files {
 task cat_tables {
   input {
     Array[File] files_to_cat
+    Array[String] samplename
     String concatenated_file_name
     String docker_image = "quay.io/theiagen/utility:1.1"
   }
@@ -106,13 +107,23 @@ task cat_tables {
   }
   command <<<
   file_array=(~{sep=' ' files_to_cat})
+  file_array_len=$(echo "${#file_array[@]}")
+  samplename_array=(~{sep=' ' samplename})
+  samplename_array_len=$(echo "${#samplename_array[@]}")
   
   touch ~{concatenated_file_name}
+
+  # Ensure file, and samplename arrays are of equal length
+  if [ "$file_array_len" -ne "$samplename_array_len" ]; then
+    echo "File array (length: $file_array_len) and samplename array (length: $samplename_array_len) are of unequal length." >&2
+    exit 1
+  fi
 
   # cat files one by one and store them in the concatenated_files file
   for index in ${!file_array[@]}; do
     file=${file_array[$index]}
-    awk 'BEGIN{ FS = OFS = "\t" } { print (NR==1? "filename" : FILENAME), $0 }' $file > file.tmp
+    samplename=${samplename_array[$index]}
+    awk -v var=$samplename 'BEGIN{ FS = OFS = "," } { print (NR==1? "filename" : var), $0 }' $file > file.tmp
     cat file.tmp >> ~{concatenated_file_name}
   done
 >>>
