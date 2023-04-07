@@ -6,20 +6,22 @@ import "../../../tasks/task_versioning.wdl" as versioning
 workflow concatenate_column_content {
   input {
     Array[File] files_to_cat
+    Array[String] samplename
     String concatenated_file_name
-    Boolean samplename_column = false
+    Boolean concatenate_csvs = false
   }
-  if (!samplename_column) {
+  if (!concatenate_csvs) {
     call file_handling.cat_files {
       input:
         files_to_cat = files_to_cat,
         concatenated_file_name = concatenated_file_name
     }
   }
-  if (samplename_column) {
+  if (concatenate_csvs) {
     call file_handling.cat_tables {
       input:
         files_to_cat = files_to_cat,
+        samplename = samplename,
         concatenated_file_name = concatenated_file_name
     }   
   }
