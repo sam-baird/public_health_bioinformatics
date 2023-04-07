@@ -7,7 +7,7 @@ workflow concatenate_column_content {
   input {
     Array[File] files_to_cat
     String concatenated_file_name
-    Array[String]? samplename
+    Array[String] samplename
     Boolean samplename_column = false
   }
   if (!samplename_column) {
