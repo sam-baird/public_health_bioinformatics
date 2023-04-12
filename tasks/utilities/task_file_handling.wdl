@@ -125,13 +125,13 @@ task cat_tables {
     if [ "$index" -eq "0" ]; then
       file=${file_array[$index]}
       samplename=${samplename_array[$index]}
-      # add the samplename as the first column, followed by other columns
+      # create a new column with "samplename" as the column name and the samplename as the column content, combine with rest of file
       awk -v var=$samplename 'BEGIN{ FS = OFS = "," } { print (NR==1? "samplename" : var), $0 }' $file > file.tmp
       cat file.tmp >> ~{concatenated_file_name}
     else
       file=${file_array[$index]}
       samplename=${samplename_array[$index]}
-      tail -n +2 $file | awk '{print "'${samplename}'," $0}' > file.tmp
+      tail -n +2 $file | awk -v var=$samplename 'BEGIN{ FS = OFS = "," } { print var, $0 }' > file.tmp
       cat file.tmp >> ~{concatenated_file_name}  
     fi
   done
