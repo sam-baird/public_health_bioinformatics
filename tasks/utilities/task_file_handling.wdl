@@ -120,11 +120,20 @@ task cat_tables {
   fi
 
   # cat files one by one and store them in the concatenated_files file
+
   for index in ${!file_array[@]}; do
-    file=${file_array[$index]}
-    samplename=${samplename_array[$index]}
-    awk -v var=$samplename 'BEGIN{ FS = OFS = "," } { print (NR==1? "filename" : var), $0 }' $file > file.tmp
-    cat file.tmp >> ~{concatenated_file_name}
+    if [ "$index" -eq "0" ]; then
+      file=${file_array[$index]}
+      samplename=${samplename_array[$index]}
+      # add the samplename as the first column, followed by other columns
+      awk -v var=$samplename 'BEGIN{ FS = OFS = "," } { print (NR==1? "samplename" : var), $0 }' $file > file.tmp
+      cat file.tmp >> ~{concatenated_file_name}
+    else
+      file=${file_array[$index]}
+      samplename=${samplename_array[$index]}
+      tail -n +2 $file | awk '{print "'${samplename}'," $0}' > file.tmp
+      cat file.tmp >> ~{concatenated_file_name}  
+    fi
   done
 >>>
   output {
