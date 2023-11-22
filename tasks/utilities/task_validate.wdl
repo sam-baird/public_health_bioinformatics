@@ -148,6 +148,7 @@ task compare_two_tsvs {
 
   # localize files to compare
   # TODO map gs:// URI to local path
+  # dummy commit for dockstore
   df1.apply(localize_files, dir=dir1, axis=1)
   df2.apply(localize_files, dir=dir2, axis=1)
   
