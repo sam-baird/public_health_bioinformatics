@@ -81,6 +81,7 @@ task compare_two_tsvs {
   import numpy as np
   import os
   import pdfkit as pdf
+  import subprocess
   from datetime import date
   from pretty_html_table import build_table
 
@@ -95,6 +96,12 @@ task compare_two_tsvs {
     # replace "None" string cells with NaNs 
     df = df.replace("None", np.nan)
     return df
+
+  def localize_files(row, dir):
+    for value in row:
+      if isinstance(value, str) and value.startswith("gs://"):
+        # copy file to local directory
+        subprocess.run(["gsutil", "-m", "cp", value, dir])
 
   # Read in TSVs and keep table name
   df1 = read_tsv("~{datatable1_tsv}")
@@ -132,6 +139,17 @@ task compare_two_tsvs {
   
   # reorder the second table to have matching column order
   df2 = df2[df1.columns]
+
+  # create directories for holding files to compare
+  dir1 = "~{datatable1}/"
+  dir2 = "~{datatable2}/"
+  os.mkdir(dir1)
+  os.mkdir(dir2)
+
+  # localize files to compare
+  # TODO map gs:// URI to local path
+  df1.apply(localize_files, dir=dir1, axis=1)
+  df2.apply(localize_files, dir=dir2, axis=1)
   
   # output the filtered df1 and df2 tables 
   df1.to_csv("~{output_prefix}-~{datatable1}.tsv", sep='\t', index=False)
